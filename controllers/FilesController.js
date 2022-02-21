@@ -73,11 +73,14 @@ const postUpload = async (req, res) => {
   }
 
   const p = process.env.FOLDER_PATH || '/tmp/files_manager';
-  if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true });
+  await fs.mkdir(p, { recursive: true }, (error) => {
+    if (error) return res.status(400).send({ error: error.message });
+  });
   const newId = uuidv4();
   // switched from using path.join
   const localPath = `${p}/${newId}`;
   const buffer = Buffer.from(data, 'base64');
+
   await fs.writeFile(
     localPath,
     buffer,
@@ -88,6 +91,7 @@ const postUpload = async (req, res) => {
       }
     }
   );
+
   const newFileDoc = await dbClient.db.collection('files').insertOne({
     userId: ObjectId(uid),
     name,
@@ -96,6 +100,7 @@ const postUpload = async (req, res) => {
     isPublic: isPublic || false,
     localPath,
   });
+
   return res.status(201).json({
     id: newFileDoc.insertedId,
     userId: uid,
