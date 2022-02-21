@@ -9,19 +9,23 @@ const getConnect = async (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   const b64auth = req.header('Authorization').split(' ')[1] || '';
-  const [email, password] = Buffer.from(b64auth, 'base64')
-    .toString()
-    .split(':');
-  dbClient.db
-    .collection('users')
-    .findOne({ email, password: sha1(password) })
-    // eslint-disable-next-line consistent-return
-    .then((user) => {
-      if (!user) return res.status(401).json({ error: 'Unauthorized' });
-      const token = uuidv4();
-      redisClient.set(`auth_${token}`, user._id.toString(), 60 * 60 * 24);
-      return res.status(200).json({ token });
-    });
+  try {
+    const [email, password] = Buffer.from(b64auth, 'base64')
+      .toString()
+      .split(':');
+    dbClient.db
+      .collection('users')
+      .findOne({ email, password: sha1(password) })
+      // eslint-disable-next-line consistent-return
+      .then((user) => {
+        if (!user) return res.status(401).json({ error: 'Unauthorized' });
+        const token = uuidv4();
+        redisClient.set(`auth_${token}`, user._id.toString(), 60 * 60 * 24);
+        return res.status(200).json({ token });
+      });
+  } catch (e) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 };
 
 const getDisconnect = async (req, res) => {
