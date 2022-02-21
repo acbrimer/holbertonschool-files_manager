@@ -16,7 +16,7 @@ const postNew = async (req, res) => {
     .collection('users')
     .findOne({ email })
     .then((u) => {
-      if (u) return res.status(400).json({ error: 'Already exists' });
+      if (u) return res.status(400).json({ error: 'Already exist' });
       dbClient.db
         .collection('users')
         // eslint-disable-next-line arrow-body-style
