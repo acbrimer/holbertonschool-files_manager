@@ -50,12 +50,7 @@ const postUpload = async (req, res) => {
       return res.status(400).json({ error: 'Parent is not a folder' });
     }
   }
-  const p = process.env.FOLDER_PATH || '/tmp/files_manager';
-  const fullPath = parentId && parentId !== 0 ? path.join(p, parentId) : p;
-  if (!fs.existsSync(fullPath)) fs.mkdirSync(fullPath, { recursive: true });
-  const newId = uuidv4();
-  const localPath = path.join(fullPath, newId);
-
+  // removed path creation for folders-- don't actually create folder in fs!
   if (type === 'folder') {
     return dbClient.db
       .collection('files')
@@ -78,14 +73,18 @@ const postUpload = async (req, res) => {
       );
   }
 
+  const p = process.env.FOLDER_PATH || '/tmp/files_manager';
+  if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true });
+  const newId = uuidv4();
+  const localPath = path.join(p, newId);
   const buffer = Buffer.from(data, 'base64').toString('utf-8');
-  fs.writeFile(
+  await fs.writeFile(
     localPath,
     buffer,
     // eslint-disable-next-line consistent-return
     (err) => {
       if (err) {
-        return { error: err.message };
+        return res.status(400).json({ error: err.message });
       }
     }
   );
@@ -104,7 +103,6 @@ const postUpload = async (req, res) => {
     type,
     parentId: parentId || 0,
     isPublic: isPublic || false,
-    localPath,
   });
 };
 
