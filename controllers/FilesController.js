@@ -7,7 +7,6 @@
 import { ObjectId } from 'mongodb';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
-import Bull from 'bull';
 import dbClient from '../utils/db';
 
 import redisClient from '../utils/redis';
@@ -24,6 +23,7 @@ const postUpload = async (req, res) => {
   }
   // check data
   const { name, type, parentId, isPublic, data } = req.body;
+  console.log('req.body', parentId);
 
   if (!name) {
     return res.status(400).json({ error: 'Missing name' });
@@ -35,6 +35,7 @@ const postUpload = async (req, res) => {
     return res.status(400).json({ error: 'Missing data' });
   }
   if (parentId && parentId !== 0) {
+    console.log('parentId', parentId);
     try {
       ObjectId(parentId);
     } catch (err) {
@@ -81,7 +82,6 @@ const postUpload = async (req, res) => {
   // switched from using path.join
   const localPath = `${p}/${newId}`;
   const buffer = Buffer.from(data, 'base64');
-  const fileQueue = new Bull('fileQueue');
   await fs.writeFile(
     localPath,
     buffer,
@@ -97,22 +97,21 @@ const postUpload = async (req, res) => {
     userId: ObjectId(uid),
     name,
     type,
-    parentId: parentId !== 0 ? ObjectId(parentId) : parentId,
     isPublic: isPublic || false,
     localPath,
+    parentId: 0,
   };
+  if (parentId && parentId !== 0) {
+    newFileDoc.parentId = ObjectId(parentId);
+  }
   await dbClient.db.collection('files').insertOne(newFileDoc);
-  fileQueue.add({
-    userId: newFileDoc.userId,
-    fileId: newFileDoc._id,
-  });
   return res.status(201).json({
     id: newFileDoc._id,
-    userId: uid,
-    name,
-    type,
-    parentId: parentId || 0,
-    isPublic: isPublic || false,
+    userId: newFileDoc.userId,
+    name: newFileDoc.name,
+    type: newFileDoc.type,
+    parentId: newFileDoc.parentId,
+    isPublic: newFileDoc.isPublic,
   });
 };
 
