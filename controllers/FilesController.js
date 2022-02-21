@@ -64,7 +64,7 @@ const postUpload = async (req, res) => {
         name,
         type,
         isPublic,
-        parentId: parentId || '0',
+        parentId: parentId || 0,
       })
       .then((r) =>
         res.status(201).json({
@@ -73,7 +73,7 @@ const postUpload = async (req, res) => {
           name,
           type,
           isPublic,
-          parentId: parentId || '0',
+          parentId: parentId || 0,
         })
       );
   }
