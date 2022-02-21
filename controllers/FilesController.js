@@ -79,7 +79,7 @@ const postUpload = async (req, res) => {
   }
 
   const buffer = Buffer.from(data, 'base64').toString('utf-8');
-  await fs.writeFile(
+  fs.writeFile(
     localPath,
     buffer,
     // eslint-disable-next-line consistent-return
@@ -94,7 +94,7 @@ const postUpload = async (req, res) => {
     name,
     type,
     parentId: parentId !== 0 ? ObjectId(parentId) : parentId,
-    isPublic,
+    isPublic: isPublic || false,
     localPath,
   });
   return res.status(201).json({
@@ -103,7 +103,7 @@ const postUpload = async (req, res) => {
     name,
     type,
     parentId: parentId || 0,
-    isPublic,
+    isPublic: isPublic || false,
     localPath,
   });
 };
