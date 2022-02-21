@@ -6,7 +6,6 @@
 /* eslint-disable comma-dangle */
 import { ObjectId } from 'mongodb';
 import { v4 as uuidv4 } from 'uuid';
-import path from 'path';
 import fs from 'fs';
 import dbClient from '../utils/db';
 
@@ -76,7 +75,8 @@ const postUpload = async (req, res) => {
   const p = process.env.FOLDER_PATH || '/tmp/files_manager';
   if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true });
   const newId = uuidv4();
-  const localPath = path.join(p, newId);
+  // switched from using path.join
+  const localPath = `${p}/${newId}`;
   const buffer = Buffer.from(data, 'base64').toString('utf-8');
   await fs.writeFile(
     localPath,
