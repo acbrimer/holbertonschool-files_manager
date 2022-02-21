@@ -1,5 +1,6 @@
 import express from 'express';
 import AppController from '../controllers/AppController';
+import UsersController from '../controllers/UsersController';
 
 /**
  * GET /status => AppController.getStatus
@@ -13,5 +14,8 @@ router.get('/status', AppController.getStatus);
 
 // About page route.
 router.get('/stats', AppController.getStats);
+
+// Create user
+router.post('/users', UsersController.postNew);
 
 export default router;

@@ -15,8 +15,11 @@ class DBClient {
     this.database = process.env.DB_DATABASE || 'files_manager';
     this.client = new MongoClient(`mongodb://${this.host}:${this.port}`);
 
+    // db prop is false until db is_alive
+    this.db = false;
     this.client.connect().then(() => {
       this.is_alive = true;
+      this.db = this.client.db(this.database);
     });
 
     this.nbUsers = this.nbUsers.bind(this);
