@@ -35,6 +35,11 @@ const postUpload = async (req, res) => {
     return res.status(400).json({ error: 'Missing data' });
   }
   if (parentId) {
+    try {
+      ObjectId(parentId);
+    } catch (err) {
+      return res.status(404).json({ error: 'Parent not found' });
+    }
     const parent = await dbClient.db
       .collection('files')
       .findOne(ObjectId(parentId));
@@ -63,9 +68,10 @@ const postUpload = async (req, res) => {
     );
   }
   const p = process.env.FOLDER_PATH || '/tmp/files_manager';
-  if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true });
+  const fullPath = parentId ? path.join(p, parentId) : p;
+  if (!fs.existsSync(fullPath)) fs.mkdirSync(fullPath, { recursive: true });
   const newId = uuidv4();
-  const localPath = path.join(p, newId);
+  const localPath = path.join(fullPath, newId);
   fs.writeFileSync(
     localPath,
     Buffer.from(data, 'base64').toString('utf-8'),
