@@ -7,6 +7,7 @@
 import { ObjectId } from 'mongodb';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
+import Bull from 'bull';
 import dbClient from '../utils/db';
 
 import redisClient from '../utils/redis';
@@ -80,7 +81,7 @@ const postUpload = async (req, res) => {
   // switched from using path.join
   const localPath = `${p}/${newId}`;
   const buffer = Buffer.from(data, 'base64');
-
+  const fileQueue = new Bull('fileQueue');
   await fs.writeFile(
     localPath,
     buffer,
@@ -92,17 +93,21 @@ const postUpload = async (req, res) => {
     }
   );
 
-  const newFileDoc = await dbClient.db.collection('files').insertOne({
+  const newFileDoc = {
     userId: ObjectId(uid),
     name,
     type,
     parentId: parentId !== 0 ? ObjectId(parentId) : parentId,
     isPublic: isPublic || false,
     localPath,
+  };
+  await dbClient.db.collection('files').insertOne(newFileDoc);
+  fileQueue.add({
+    userId: newFileDoc.userId,
+    fileId: newFileDoc._id,
   });
-
   return res.status(201).json({
-    id: newFileDoc.insertedId,
+    id: newFileDoc._id,
     userId: uid,
     name,
     type,
