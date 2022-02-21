@@ -51,7 +51,7 @@ const postUpload = async (req, res) => {
     }
   }
   const p = process.env.FOLDER_PATH || '/tmp/files_manager';
-  const fullPath = parentId ? path.join(p, parentId) : p;
+  const fullPath = parentId && parentId !== 0 ? path.join(p, parentId) : p;
   if (!fs.existsSync(fullPath)) fs.mkdirSync(fullPath, { recursive: true });
   const newId = uuidv4();
   const localPath = path.join(fullPath, newId);
@@ -78,37 +78,34 @@ const postUpload = async (req, res) => {
       );
   }
 
-  fs.writeFileSync(
+  const buffer = Buffer.from(data, 'base64').toString('utf-8');
+  await fs.writeFile(
     localPath,
-    Buffer.from(data, 'base64').toString('utf-8'),
+    buffer,
     // eslint-disable-next-line consistent-return
     (err) => {
       if (err) {
-        return res.status(400).json({ error: err.message });
+        return { error: err.message };
       }
     }
   );
-  return dbClient.db
-    .collection('files')
-    .insertOne({
-      userId: uid,
-      name,
-      type,
-      parentId: parentId || 0,
-      isPublic,
-      localPath,
-    })
-    .then((r) =>
-      res.status(201).json({
-        id: r.insertedId,
-        userId: uid,
-        name,
-        type,
-        parentId: parentId || 0,
-        isPublic,
-        localPath,
-      })
-    );
+  const newFileDoc = await dbClient.db.collection('files').insertOne({
+    userId: uid,
+    name,
+    type,
+    parentId: parentId !== 0 ? ObjectId(parentId) : parentId,
+    isPublic,
+    localPath,
+  });
+  return res.status(201).json({
+    id: newFileDoc.insertedId,
+    userId: uid,
+    name,
+    type,
+    parentId: parentId || 0,
+    isPublic,
+    localPath,
+  });
 };
 
 export default { postUpload };
