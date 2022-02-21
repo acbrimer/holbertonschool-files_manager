@@ -1,3 +1,4 @@
+/* eslint-disable arrow-body-style */
 /* eslint-disable consistent-return */
 /* eslint-disable object-curly-newline */
 /* eslint-disable function-paren-newline */
@@ -23,7 +24,7 @@ const postUpload = async (req, res) => {
   }
   // check data
   const { name, type, parentId, isPublic, data } = req.body;
-  let parentDoc;
+
   if (!name) {
     return res.status(400).json({ error: 'Missing name' });
   }
@@ -34,14 +35,14 @@ const postUpload = async (req, res) => {
     return res.status(400).json({ error: 'Missing data' });
   }
   if (parentId) {
-    parentDoc = await dbClient.db
+    const parent = await dbClient.db
       .collection('files')
       .findOne(ObjectId(parentId));
-    if (!parentDoc) {
-      return res.status(400).json({ error: 'Parent not found' });
+    if (!parent) {
+      return res.status(404).json({ error: 'Parent not found' });
     }
-    if (parentDoc.type !== 'folder') {
-      return res.status(404).json({ error: 'arent is not a folder' });
+    if (parent.type && parent.type !== 'folder') {
+      return res.status(400).json({ error: 'Parent is not a folder' });
     }
   }
   if (type === 'folder') {
@@ -50,16 +51,14 @@ const postUpload = async (req, res) => {
         // eslint-disable-next-line object-curly-newline
         .insertOne({ userId: uid, name, type, isPublic, parentId })
         .then((r) =>
-          res
-            .status(201)
-            .json({
-              id: r.insertedId,
-              userId: uid,
-              name,
-              type,
-              isPublic,
-              parentId,
-            })
+          res.status(201).json({
+            id: r.insertedId,
+            userId: uid,
+            name,
+            type,
+            isPublic,
+            parentId,
+          })
         )
     );
   }
@@ -81,17 +80,15 @@ const postUpload = async (req, res) => {
     .collection('files')
     .insertOne({ userId: uid, name, type, parentId, isPublic, localPath })
     .then((r) =>
-      res
-        .status(201)
-        .json({
-          id: r.insertedId,
-          userId: uid,
-          name,
-          type,
-          parentId,
-          isPublic,
-          localPath,
-        })
+      res.status(201).json({
+        id: r.insertedId,
+        userId: uid,
+        name,
+        type,
+        parentId,
+        isPublic,
+        localPath,
+      })
     );
 };
 
