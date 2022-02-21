@@ -50,34 +50,34 @@ const postUpload = async (req, res) => {
       return res.status(400).json({ error: 'Parent is not a folder' });
     }
   }
+  const p = process.env.FOLDER_PATH || '/tmp/files_manager';
+  const fullPath = parentId ? path.join(p, parentId) : p;
+  if (!fs.existsSync(fullPath)) fs.mkdirSync(fullPath, { recursive: true });
+  const newId = uuidv4();
+  const localPath = path.join(fullPath, newId);
+
   if (type === 'folder') {
-    return (
-      dbClient
-        // eslint-disable-next-line object-curly-newline
-        .insertOne({
+    return dbClient.db
+      .collection('files')
+      .insertOne({
+        userId: uid,
+        name,
+        type,
+        isPublic,
+        parentId: parentId || '0',
+      })
+      .then((r) =>
+        res.status(201).json({
+          id: r.insertedId,
           userId: uid,
           name,
           type,
           isPublic,
           parentId: parentId || '0',
         })
-        .then((r) =>
-          res.status(201).json({
-            id: r.insertedId,
-            userId: uid,
-            name,
-            type,
-            isPublic,
-            parentId: parentId || '0',
-          })
-        )
-    );
+      );
   }
-  const p = process.env.FOLDER_PATH || '/tmp/files_manager';
-  const fullPath = parentId ? path.join(p, parentId) : p;
-  if (!fs.existsSync(fullPath)) fs.mkdirSync(fullPath, { recursive: true });
-  const newId = uuidv4();
-  const localPath = path.join(fullPath, newId);
+
   fs.writeFileSync(
     localPath,
     Buffer.from(data, 'base64').toString('utf-8'),
