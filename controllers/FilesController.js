@@ -34,7 +34,7 @@ const postUpload = async (req, res) => {
   if (type !== 'folder' && !data) {
     return res.status(400).json({ error: 'Missing data' });
   }
-  if (parentId) {
+  if (parentId && parentId !== 0) {
     try {
       ObjectId(parentId);
     } catch (err) {
@@ -90,14 +90,21 @@ const postUpload = async (req, res) => {
   );
   return dbClient.db
     .collection('files')
-    .insertOne({ userId: uid, name, type, parentId, isPublic, localPath })
+    .insertOne({
+      userId: uid,
+      name,
+      type,
+      parentId: parentId || 0,
+      isPublic,
+      localPath,
+    })
     .then((r) =>
       res.status(201).json({
         id: r.insertedId,
         userId: uid,
         name,
         type,
-        parentId,
+        parentId: parentId || 0,
         isPublic,
         localPath,
       })
