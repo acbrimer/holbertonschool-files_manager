@@ -38,13 +38,13 @@ const postUpload = async (req, res) => {
     try {
       ObjectId(parentId);
     } catch (err) {
-      return res.status(404).json({ error: 'Parent not found' });
+      return res.status(400).json({ error: 'Parent not found' });
     }
     const parent = await dbClient.db
       .collection('files')
       .findOne(ObjectId(parentId));
     if (!parent) {
-      return res.status(404).json({ error: 'Parent not found' });
+      return res.status(400).json({ error: 'Parent not found' });
     }
     if (parent.type && parent.type !== 'folder') {
       return res.status(400).json({ error: 'Parent is not a folder' });
@@ -54,7 +54,13 @@ const postUpload = async (req, res) => {
     return (
       dbClient
         // eslint-disable-next-line object-curly-newline
-        .insertOne({ userId: uid, name, type, isPublic, parentId })
+        .insertOne({
+          userId: uid,
+          name,
+          type,
+          isPublic,
+          parentId: parentId || '0',
+        })
         .then((r) =>
           res.status(201).json({
             id: r.insertedId,
@@ -62,7 +68,7 @@ const postUpload = async (req, res) => {
             name,
             type,
             isPublic,
-            parentId,
+            parentId: parentId || '0',
           })
         )
     );
