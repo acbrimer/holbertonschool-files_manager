@@ -77,7 +77,7 @@ const postUpload = async (req, res) => {
   const newId = uuidv4();
   // switched from using path.join
   const localPath = `${p}/${newId}`;
-  const buffer = Buffer.from(data, 'base64').toString('utf-8');
+  const buffer = Buffer.from(data, 'base64');
   await fs.writeFile(
     localPath,
     buffer,
@@ -89,7 +89,7 @@ const postUpload = async (req, res) => {
     }
   );
   const newFileDoc = await dbClient.db.collection('files').insertOne({
-    userId: uid,
+    userId: ObjectId(uid),
     name,
     type,
     parentId: parentId !== 0 ? ObjectId(parentId) : parentId,
