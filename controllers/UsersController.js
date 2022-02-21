@@ -1,6 +1,8 @@
 /* eslint-disable consistent-return */
 /* eslint-disable implicit-arrow-linebreak */
 import sha1 from 'sha1';
+import { ObjectId } from 'mongodb';
+import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
 
 const postNew = async (req, res) => {
@@ -26,4 +28,23 @@ const postNew = async (req, res) => {
     });
 };
 
-export default { postNew };
+const getMe = async (req, res) => {
+  const token = req.header('X-Token');
+  if (token) {
+    const uid = await redisClient.get(`auth_${token}`);
+    if (uid) {
+      return dbClient.db
+        .collection('users')
+        .findOne(ObjectId(uid))
+        .then((user) => {
+          if (user) {
+            return res.status(200).json({ id: user._id, email: user.email });
+          }
+          return res.status(401).json({ error: 'Unauthorized' });
+        });
+    }
+  }
+  return res.status(401).json({ error: 'Unauthorized' });
+};
+
+export default { postNew, getMe };

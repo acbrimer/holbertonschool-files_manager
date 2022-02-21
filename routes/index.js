@@ -1,5 +1,6 @@
 import express from 'express';
 import AppController from '../controllers/AppController';
+import AuthController from '../controllers/AuthController';
 import UsersController from '../controllers/UsersController';
 
 /**
@@ -17,5 +18,10 @@ router.get('/stats', AppController.getStats);
 
 // Create user
 router.post('/users', UsersController.postNew);
+
+// User auth
+router.get('/connect', AuthController.getConnect);
+router.get('/disconnect', AuthController.getDisconnect);
+router.get('/users/me', UsersController.getMe);
 
 export default router;
