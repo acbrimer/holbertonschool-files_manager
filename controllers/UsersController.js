@@ -6,22 +6,22 @@ import dbClient from '../utils/db';
 const postNew = async (req, res) => {
   const { email, password } = req.body;
   if (!email) {
-    return res.status(400).send('Missing email');
+    return res.status(400).json({ error: 'Missing email' });
   }
   if (!password) {
-    return res.status(400).send('Missing password');
+    return res.status(400).json({ error: 'Missing password' });
   }
 
   dbClient.db
     .collection('users')
     .findOne({ email })
     .then((u) => {
-      if (u) return res.status(400).send('Already exists');
+      if (u) return res.status(400).json({ error: 'Already exists' });
       dbClient.db
         .collection('users')
         // eslint-disable-next-line arrow-body-style
         .insertOne({ email, password: sha1(password) }, (err, docResult) => {
-          return res.json({ id: docResult.insertedId, email });
+          return res.status(201).json({ id: docResult.insertedId, email });
         });
     });
 };
